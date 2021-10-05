@@ -3,7 +3,9 @@ import axios from "axios";
 
 let form: HTMLFormElement;
 let addressInput: HTMLInputElement;
-const GOOGLE_API_KEY = "";
+const zoomLevel = 16;
+
+const GOOGLE_API_KEY = "Your key goes here";
 
 type GoogleGeocodingResponse = {
   results: { geometry: { location: { lat: number; lng: number } } }[];
@@ -32,22 +34,29 @@ function searchAddressHandler(event: Event) {
         enteredAddress
       )}&key=${GOOGLE_API_KEY}`
     )
-    .then((response) => searchResultResponse<GoogleGeocodingResponse>(response.data))
+    .then((response) =>
+      searchResultResponse<GoogleGeocodingResponse>(response.data))
     .catch((error) => searchResultResponseError(error));
 }
 
-function searchResultResponse<T extends GoogleGeocodingResponse>(responseData : T) {
-    
-    if(responseData.status !== "OK")
-        throw new Error("Could not fetch location");
+function searchResultResponse<T extends GoogleGeocodingResponse>(
+  responseData: T
+) {
+  if (responseData.status !== "OK") 
+    throw new Error("Could not fetch location");
 
-    const coordinates = responseData.results[0].geometry.location;
+  const coordinates = responseData.results[0].geometry.location;
+  const map = new google.maps.Map(document.getElementById("map") as Element, {
+    center: coordinates,
+    zoom: zoomLevel,
+  });
+
+  new google.maps.Marker({ position: coordinates, map: map });
 }
 
-function searchResultResponseError(error : any) {
-    alert(error?.message);
-    console.log(error);
-    
+function searchResultResponseError(error: any) {
+  alert(error?.message);
+  console.log(error);
 }
 
 // Execution Logic start
