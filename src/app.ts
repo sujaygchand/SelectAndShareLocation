@@ -1,18 +1,53 @@
 import { Validation } from "./validation";
-let form : HTMLFormElement; 
-let addressInput : HTMLInputElement;
+import axios from "axios";
+
+let form: HTMLFormElement;
+let addressInput: HTMLInputElement;
+const GOOGLE_API_KEY = "";
+
+type GoogleGeocodingResponse = {
+  results: { geometry: { location: { lat: number; lng: number } } }[];
+  status: "OK" | "ZERO_RESULTS";
+};
 
 function Init() {
   form = document.querySelector("form") as HTMLFormElement;
   Validation.checkHTMLElementIsValid([form], "form cannot be found on page");
-  
+  form.addEventListener("submit", searchAddressHandler);
+
   addressInput = document.getElementById("address") as HTMLInputElement;
-  Validation.checkHTMLElementIsValid([addressInput], "address cannot be found on page");
+  Validation.checkHTMLElementIsValid(
+    [addressInput],
+    "address cannot be found on page"
+  );
 }
 
-function searchAddressHandler(event: Event){
-    event.preventDefault();
-    const enteredAddress = addressInput.value;
+function searchAddressHandler(event: Event) {
+  event.preventDefault();
+  const enteredAddress = addressInput.value;
+
+  axios
+    .get<GoogleGeocodingResponse>(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURI(
+        enteredAddress
+      )}&key=${GOOGLE_API_KEY}`
+    )
+    .then((response) => searchResultResponse<GoogleGeocodingResponse>(response.data))
+    .catch((error) => searchResultResponseError(error));
+}
+
+function searchResultResponse<T extends GoogleGeocodingResponse>(responseData : T) {
+    
+    if(responseData.status !== "OK")
+        throw new Error("Could not fetch location");
+
+    const coordinates = responseData.results[0].geometry.location;
+}
+
+function searchResultResponseError(error : any) {
+    alert(error?.message);
+    console.log(error);
+    
 }
 
 // Execution Logic start
